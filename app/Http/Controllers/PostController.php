@@ -15,7 +15,11 @@ class PostController extends Controller
     public function index()
     {
         $posts = Post::with('user')->get();
-        return PostResource::collection($posts);
+
+        return response()->json([
+            'message' => '',
+            'data' => PostResource::collection($posts),
+        ],200);
     }
 
     /**
@@ -40,7 +44,10 @@ class PostController extends Controller
 
         $post->save();
 
-        return 'Post Created';
+        return response()->json([
+            'message' => 'Post Created',
+            'data' => $post,
+        ],200);
     }
 
     /**
@@ -49,7 +56,11 @@ class PostController extends Controller
     public function show($id)
     {
         $post = Post::find($id);
-        return new PostResource($post);
+        
+        return response()->json([
+            'message' => '',
+            'data' => new PostResource($post)
+        ],200);
     }
 
     /**
