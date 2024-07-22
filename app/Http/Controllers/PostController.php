@@ -5,20 +5,38 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StorePostRequest;
 use App\Http\Requests\UpdatePostRequest;
 use App\Http\Resources\PostResource;
+use App\Jobs\TestJob;
 use App\Models\Post;
+use App\Models\User;
+use Carbon\Carbon;
+use Carbon\CarbonInterval;
+use DatePeriod;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PostController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $posts = Post::with('user')->get();
+        $posts = Post::where(function($q) use ($request){
+            if ($request->user_id != null) {
+                $q->where('user_id',$request->user_id);
+            }
+        })->limit(10)->get();
+
+        // $posts = Post::with('user')->whereHas('user',function($q){
+        //     $q->where('email','aa@aa.com');
+        // })->limit(10000)->get();
+
+        // $posts = Post::paginate($request->perPage);
 
         return response()->json([
             'message' => '',
-            'data' => PostResource::collection($posts),
+            'data' => $posts,
+            // 'data' => PostResource::collection($posts),
         ],200);
     }
 
@@ -56,7 +74,7 @@ class PostController extends Controller
     public function show($id)
     {
         $post = Post::find($id);
-        
+
         return response()->json([
             'message' => '',
             'data' => new PostResource($post)
@@ -84,6 +102,11 @@ class PostController extends Controller
      */
     public function destroy(Post $post)
     {
-        //
+        $comments = $post->comments;
+
+        foreach ($comments as $comment) {
+            $comment->delete();
+        }
+        $post->delete();
     }
 }
