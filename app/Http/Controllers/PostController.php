@@ -21,22 +21,30 @@ class PostController extends Controller
      */
     public function index(Request $request)
     {
-        $posts = Post::where(function($q) use ($request){
-            if ($request->user_id != null) {
-                $q->where('user_id',$request->user_id);
-            }
-        })->limit(10)->get();
 
-        // $posts = Post::with('user')->whereHas('user',function($q){
-        //     $q->where('email','aa@aa.com');
-        // })->limit(10000)->get();
+        // default values
+        $skip = 0;
+        $perPage = 100;
+        $currentPage = 1;
 
-        // $posts = Post::paginate($request->perPage);
+        // if user sets specific perPage
+        if ($request->perPage) {
+            $perPage = (int)$request->perPage;
+        }
+
+        // if user sets specific page
+        if ($request->page) {
+            $currentPage = (int)$request->page;
+            $skip = (int) $perPage * ($currentPage - 1);
+        }
+
+        $posts = Post::skip($skip)->limit($perPage)->with('user')->get();
 
         return response()->json([
             'message' => '',
+            'current_page' => $currentPage,
+            'per_page' => $perPage,
             'data' => $posts,
-            // 'data' => PostResource::collection($posts),
         ],200);
     }
 
